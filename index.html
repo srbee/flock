@@ -43,7 +43,9 @@ function sync(){bv.textContent=bs.value;ov.textContent=os.value;sv.textContent=(
 [bs,os,ss].forEach(e=>e.addEventListener('input',sync));
 document.getElementById('scatterBtn').onclick=()=>makeObstacles(+os.value);
 document.getElementById('resetBtn').onclick=()=>{bs.value=90;os.value=12;ss.value=24;sync();makeObstacles(12);guide.until=0};
-function syncRunButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';learnBtn.textContent=explanationOpen?'▶ Resume simulation':'ⓘ Explain Boids'}\npauseBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else paused=!paused;syncRunButtons()};\nlearnBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else{explanationOpen=true;boidsInfo.hidden=false;paused=true}syncRunButtons()};
+function syncRunButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';learnBtn.textContent=explanationOpen?'▶ Resume simulation':'ⓘ Explain Boids'}
+pauseBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else paused=!paused;syncRunButtons()};
+learnBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else{explanationOpen=true;boidsInfo.hidden=false;paused=true}syncRunButtons()};
 function point(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();let p=point(e);down=true;start=p;lastPoint=p;stroke=[p];drag=null;let best=Infinity;obstacles.forEach(o=>{let d=Math.hypot(o.x-p.x,o.y-p.y);if(d<o.r+17&&d<best){best=d;drag=o}});canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(!down)return;e.preventDefault();let p=point(e);if(drag){drag.x=clamp(p.x,drag.r,W-drag.r);drag.y=clamp(p.y,drag.r,H-drag.r)}else if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>2)stroke.push(p);lastPoint=p});
