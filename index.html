@@ -23,7 +23,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px}h1{
 <section class="controls">
 <div class="control"><div class="top"><label for="birds">Birds</label><output id="birdsVal">90</output></div><input id="birds" type="range" min="15" max="440" step="5" value="90"></div>
 <div class="control"><div class="top"><label for="obstacles">Obstacles</label><output id="obstaclesVal">12</output></div><input id="obstacles" type="range" min="0" max="30" value="12"></div>
-<div class="control"><div class="top"><label for="speed">Speed</label><output id="speedVal">5.0×</output></div><input id="speed" type="range" min="1" max="10" value="5"></div>
+<div class="control"><div class="top"><label for="speed">Speed</label><output id="speedVal">5.0×</output></div><input id="speed" type="range" min="1" max="10" step="0.5" value="5"></div>
 </section>
 <div class="actions">
 <button class="primary" id="pauseBtn" type="button">Ⅱ Pause</button>
@@ -48,7 +48,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px}h1{
 </main>
 </div>
 <script>
-(()=> {
+(()=>{
 'use strict';
 const $=id=>document.getElementById(id);
 const canvas=$('world'),ctx=canvas.getContext('2d'),stage=$('stage');
@@ -83,13 +83,13 @@ function redistributeToMiddle(){
    if(clearRocks&&clearBirds){p={x,y};break}
   }
   if(!p)p={x:rand(W*.2,W*.8),y:rand(H*.2,H*.8)};
-  b.x=p.x;b.y=p.y;placed.push(p);
+  b.x=p.x;b.y=p.y;
  }
 }
 function sync(){ $('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=Number(speedSlider.value).toFixed(1)+'×';makeFlock();makeRocks()}
 birdSlider.addEventListener('input',()=>{ $('birdsVal').value=birdSlider.value;makeFlock()});
 obSlider.addEventListener('input',()=>{ $('obstaclesVal').value=obSlider.value;makeRocks()});
-speedSlider.addEventListener('input',()=>{$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×'});
+speedSlider.addEventListener('input',()=>{$('speedVal').value=Number(speedSlider.value).toFixed(1)+'×'});
 function updateButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';learnBtn.textContent=showInfo?'▶ Resume simulation':'ⓘ Explain Boids'}
 pauseBtn.addEventListener('click',()=>{paused=!paused;if(showInfo){showInfo=false;info.hidden=true}updateButtons()});
 learnBtn.addEventListener('click',()=>{showInfo=!showInfo;info.hidden=!showInfo;paused=showInfo;updateButtons()});
@@ -130,7 +130,7 @@ function nowSafe(){return performance.now()}
 function frame(t){if(!last)last=t;const dt=Math.min((t-last)/1000,.04);last=t;if(!paused){step(dt,t);if(!lastRedistribute)lastRedistribute=t;if(t-lastRedistribute>=5000){redistributeToMiddle();lastRedistribute=t}}draw();requestAnimationFrame(frame)}
 try{
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(resize).observe(stage);else window.addEventListener('resize',resize);
- resize();$('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×';refreshStats();updateButtons();requestAnimationFrame(frame);
+ resize();$('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=Number(speedSlider.value).toFixed(1)+'×';refreshStats();updateButtons();requestAnimationFrame(frame);
 }catch(err){console.error(err);$('stats').textContent='Startup error: '+err.message}
 })();
 </script>
