@@ -1,73 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#10172b">
 <title>Bird Flock — Boids Simulation</title>
 <style>
-:root{color-scheme:dark;--ink:#f4f7ff;--muted:#aab6d4;--panel:rgba(255,255,255,.09)}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020;color:var(--ink)}
-body{display:flex;justify-content:center}.app{width:min(100%,760px);height:100dvh;min-height:0;display:flex;flex-direction:column;padding:10px 12px 12px;gap:9px;background:radial-gradient(ellipse at 15% 0%,#24345c 0%,#121b35 42%,#0b1020 100%)}
-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}h1{margin:0;font-size:clamp(19px,5vw,26px);letter-spacing:.2px;line-height:1.1}.sub{color:var(--muted);font-size:11px;margin-top:3px}.pill{border:1px solid #ffffff30;border-radius:99px;padding:6px 9px;color:#d8e5ff;font-size:10px;white-space:nowrap;background:#ffffff12}
-.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:0 0 auto}.control{background:var(--panel);border:1px solid #ffffff1a;border-radius:13px;padding:8px 9px 7px;min-width:0;box-shadow:0 5px 18px #0002}.control-top{display:flex;align-items:center;justify-content:space-between;gap:3px;font-size:11px;color:#dce6ff}output{font-weight:800;color:#fff;font-variant-numeric:tabular-nums;font-size:12px}input[type=range]{width:100%;margin:8px 0 1px;accent-color:#69e2d0;height:18px}
-.actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}button{border:1px solid #ffffff30;border-radius:10px;padding:7px 12px;color:#f5f8ff;background:#ffffff1c;font-weight:650;font-size:11px}button.primary{background:linear-gradient(135deg,#11a99b,#3978df);border:0}.hint{margin-left:auto;font-size:10px;color:var(--muted)}
-.stage{flex:1 1 auto;min-height:90px;position:relative;overflow:hidden;border-radius:17px;border:1px solid #ffffff2b;background:linear-gradient(155deg,#111f37,#091322);box-shadow:inset 0 0 40px #0008,0 10px 30px #0004}canvas{display:block;width:100%;height:100%;touch-action:none}
-.legend{position:absolute;left:10px;bottom:8px;display:flex;gap:9px;flex-wrap:wrap;pointer-events:none}.legend span{display:flex;align-items:center;gap:4px;color:#c8d5ee;font-size:9px;text-shadow:0 1px 3px #000}.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.stats{position:absolute;right:9px;top:8px;color:#dce8ff;font-size:9px;background:#07101bbd;padding:5px 7px;border-radius:8px}.boids-info{position:absolute;inset:10px;z-index:3;overflow:auto;padding:clamp(14px,4vw,25px);border:1px solid #8bdedc88;border-radius:15px;background:linear-gradient(145deg,rgba(12,25,52,.97),rgba(31,24,66,.97));box-shadow:0 12px 35px #0009;color:#f4f7ff}.boids-info[hidden]{display:none}.boids-info h2{font-size:clamp(19px,4vw,25px);margin:0 0 9px;color:#8ff5dc}.boids-info p{font-size:clamp(12px,2.5vw,15px);line-height:1.45;color:#dce6ff}.boids-info ol{padding-left:22px;margin:12px 0}.boids-info li{font-size:clamp(12px,2.5vw,15px);line-height:1.45;margin:10px 0}.boids-info li b{color:#ffd27d}.boids-info .takeaway{padding:10px;border-radius:10px;background:#ffffff12;color:#fff}.boids-info small{color:#aab6d4;font-size:10px}
-@media(max-height:560px){.app{padding:6px 9px 8px;gap:5px}.control{padding:5px 7px 3px}input[type=range]{margin:4px 0 0}.sub{display:none}button{padding:5px 9px}}@media(min-width:600px){.app{padding:16px;gap:12px}.control{padding:10px 13px}}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,sans-serif;background:#0b1020;color:#f4f7ff}
+.app{height:100dvh;width:min(100%,760px);margin:auto;display:flex;flex-direction:column;gap:9px;padding:10px;background:radial-gradient(ellipse at 15% 0%,#24345c,#0b1020 75%)}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px}h1{font-size:clamp(20px,5vw,27px);margin:0}.sub{font-size:11px;color:#aab6d4}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.control{background:#ffffff12;border:1px solid #ffffff25;border-radius:12px;padding:8px;font-size:11px}.top{display:flex;justify-content:space-between}output{font-weight:bold}input{width:100%;accent-color:#69e2d0;margin:8px 0 0}
+.actions{display:flex;gap:6px;flex-wrap:wrap}button{border:1px solid #ffffff35;border-radius:10px;padding:8px 10px;color:white;background:#ffffff20;font-weight:650;font-size:11px}button.primary{background:linear-gradient(135deg,#11a99b,#3978df);border:0}
+.stage{position:relative;flex:1;min-height:100px;overflow:hidden;border-radius:16px;border:1px solid #ffffff35;background:#101c35}canvas{width:100%;height:100%;display:block;touch-action:none}
+.stats{position:absolute;right:8px;top:8px;background:#07101bbb;border-radius:8px;padding:5px 8px;font-size:10px}.legend{position:absolute;left:9px;bottom:7px;font-size:10px;color:#dce6ff;pointer-events:none}
+.info{position:absolute;inset:9px;z-index:4;overflow:auto;background:rgba(10,20,45,.97);border:1px solid #8bdedc;border-radius:14px;padding:16px;box-shadow:0 10px 30px #0009}.info[hidden]{display:none}.info h2{margin:0 0 8px;color:#8ff5dc;font-size:21px}.info p,.info li{font-size:14px;line-height:1.45}.info li{margin:9px 0}.info b{color:#ffd27d}.info small{color:#aab6d4}
+@media(max-height:560px){.app{padding:6px;gap:5px}.control{padding:5px}.sub{display:none}button{padding:6px 8px}}
 </style>
 </head>
 <body>
 <div class="app">
-<header><div><h1>🐦 Bird Flock</h1><div class="sub">A little world of self-organising motion</div></div><div class="pill">BOIDS · LIVE SIMULATION</div></header>
-<section class="controls" aria-label="Simulation controls">
-<div class="control"><div class="control-top"><label for="birds">Birds</label><output id="birdsVal">90</output></div><input id="birds" type="range" min="15" max="440" value="90" step="5"></div>
-<div class="control"><div class="control-top"><label for="obstacles">Obstacles</label><output id="obstaclesVal">12</output></div><input id="obstacles" type="range" min="0" max="30" value="12"></div>
-<div class="control"><div class="control-top"><label for="speed">Speed</label><output id="speedVal">2.4×</output></div><input id="speed" type="range" min="5" max="40" value="24"></div>
+<header><div><h1>🐦 Bird Flock</h1><div class="sub">A little world of self-organising motion</div></div><div class="sub">BOIDS · LIVE</div></header>
+<section class="controls">
+<div class="control"><div class="top"><label for="birds">Birds</label><output id="birdsVal">90</output></div><input id="birds" type="range" min="15" max="440" step="5" value="90"></div>
+<div class="control"><div class="top"><label for="obstacles">Obstacles</label><output id="obstaclesVal">12</output></div><input id="obstacles" type="range" min="0" max="30" value="12"></div>
+<div class="control"><div class="top"><label for="speed">Speed</label><output id="speedVal">2.4×</output></div><input id="speed" type="range" min="5" max="40" value="24"></div>
 </section>
-<div class="actions"><button class="primary" id="pauseBtn">Ⅱ Pause</button><button id="learnBtn">ⓘ Explain Boids</button><button id="scatterBtn">↻ New layout</button><button id="resetBtn">Reset</button><span class="hint">Drag circles · draw a stroke to guide the flock</span></div>
-<main class="stage" id="stage"><canvas id="world"></canvas><div class="stats" id="stats">90 birds · 12 circular obstacles</div><div class="legend"><span><i class="dot" style="background:#70f0d2"></i>Birds</span><span><i class="dot" style="background:#ffbd69"></i>Obstacles</span><span><i class="dot" style="background:#8b9cff"></i>Trail glow</span></div><section id="boidsInfo" class="boids-info" hidden><h2>How the Boids algorithm works</h2><p>Each bird follows three simple local rules. No leader or central controller is needed.</p><ol><li><b>Separation</b> — keep a safe distance from nearby birds to avoid collisions.</li><li><b>Alignment</b> — steer in roughly the same direction and speed as nearby birds.</li><li><b>Cohesion</b> — move towards the average position of nearby birds to stay with the flock.</li></ol><p class="takeaway">Three simple rules → coordinated flock behaviour. This is called <b>emergence</b>.</p><small>Named “Boids” by computer scientist Craig Reynolds, who introduced the model in 1986.</small></section></main>
+<div class="actions">
+<button class="primary" id="pauseBtn" type="button">Ⅱ Pause</button>
+<button id="learnBtn" type="button">ⓘ Explain Boids</button>
+<button id="scatterBtn" type="button">↻ New layout</button>
+<button id="resetBtn" type="button">Reset</button>
+</div>
+<main class="stage" id="stage">
+<canvas id="world"></canvas><div class="stats" id="stats">90 birds · 12 obstacles</div>
+<div class="legend">● Birds　 ● Obstacles　 · Drag circles · Draw a stroke to guide the flock</div>
+<section class="info" id="boidsInfo" hidden>
+<h2>How the Boids algorithm works</h2>
+<p>Each bird follows three simple local rules. There is no leader and no central controller.</p>
+<ol>
+<li><b>Separation</b> — keep a safe distance from nearby birds to avoid collisions.</li>
+<li><b>Alignment</b> — steer in roughly the same direction and speed as nearby birds.</li>
+<li><b>Cohesion</b> — move towards the average position of nearby birds to stay with the flock.</li>
+</ol>
+<p><b>Three simple rules → coordinated flock behaviour.</b> This is called emergence.</p>
+<small>The Boids model was introduced by computer scientist Craig Reynolds in 1986.</small>
+</section>
+</main>
 </div>
 <script>
-(function(){
-const canvas=document.getElementById('world'),ctx=canvas.getContext('2d'),stage=document.getElementById('stage');
-const bs=document.getElementById('birds'),os=document.getElementById('obstacles'),ss=document.getElementById('speed');
-const bv=document.getElementById('birdsVal'),ov=document.getElementById('obstaclesVal'),sv=document.getElementById('speedVal'),stats=document.getElementById('stats'),pauseBtn=document.getElementById('pauseBtn'),learnBtn=document.getElementById('learnBtn'),boidsInfo=document.getElementById('boidsInfo');
-let W=0,H=0,dpr=1,birds=[],obstacles=[],paused=false,explanationOpen=false,last=0,drag=null,down=false,start=null,lastPoint=null,stroke=[],guide={mode:'direction',x:0,y:0,cx:0,cy:0,until:0};
-const rand=(a,b)=>a+Math.random()*(b-a),mag=v=>Math.hypot(v.x,v.y),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),mul=(a,s)=>({x:a.x*s,y:a.y*s}),norm=v=>{let n=mag(v)||1;return{x:v.x/n,y:v.y/n}},limit=(v,m)=>mag(v)>m?mul(v,m/mag(v)):v,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function statsUpdate(){stats.textContent=birds.length+' birds · '+obstacles.length+' circular obstacles'}
-function seed(){birds=[];for(let i=0;i<+bs.value;i++){let a=rand(0,Math.PI*2),s=rand(1.1,2.1);birds.push({x:rand(8,W-8),y:rand(8,H-8),vx:Math.cos(a)*s,vy:Math.sin(a)*s,phase:rand(0,6.28),hue:rand(0,360)})}statsUpdate()}
-function makeObstacles(n){obstacles=[];let m=Math.min(W,H);for(let i=0;i<n;i++){let x,y,k=0;do{x=rand(28,Math.max(29,W-28));y=rand(28,Math.max(29,H-28));k++}while(k<40&&obstacles.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+35));obstacles.push({x,y,r:rand(Math.max(11,m*.018),Math.max(17,m*.035)),hue:rand(20,65)})}statsUpdate()}
-function resize(){let r=stage.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);if(!birds.length)seed();else birds.forEach(b=>{b.x=clamp(b.x,8,W-8);b.y=clamp(b.y,8,H-8)});if(!obstacles.length)makeObstacles(+os.value)}
-function sync(){bv.textContent=bs.value;ov.textContent=os.value;sv.textContent=(ss.value/10).toFixed(1)+'×';if(birds.length!==+bs.value)seed();if(obstacles.length!==+os.value)makeObstacles(+os.value);statsUpdate()}
-[bs,os,ss].forEach(e=>e.addEventListener('input',sync));
-document.getElementById('scatterBtn').onclick=()=>makeObstacles(+os.value);
-document.getElementById('resetBtn').onclick=()=>{bs.value=90;os.value=12;ss.value=24;sync();makeObstacles(12);guide.until=0};
-function syncRunButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';learnBtn.textContent=explanationOpen?'▶ Resume simulation':'ⓘ Explain Boids'}
-pauseBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else paused=!paused;syncRunButtons()};
-learnBtn.onclick=()=>{if(explanationOpen){explanationOpen=false;boidsInfo.hidden=true;paused=false}else{explanationOpen=true;boidsInfo.hidden=false;paused=true}syncRunButtons()};
-function point(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
-canvas.addEventListener('pointerdown',e=>{e.preventDefault();let p=point(e);down=true;start=p;lastPoint=p;stroke=[p];drag=null;let best=Infinity;obstacles.forEach(o=>{let d=Math.hypot(o.x-p.x,o.y-p.y);if(d<o.r+17&&d<best){best=d;drag=o}});canvas.setPointerCapture(e.pointerId)});
-canvas.addEventListener('pointermove',e=>{if(!down)return;e.preventDefault();let p=point(e);if(drag){drag.x=clamp(p.x,drag.r,W-drag.r);drag.y=clamp(p.y,drag.r,H-drag.r)}else if(!lastPoint||Math.hypot(p.x-lastPoint.x,p.y-lastPoint.y)>2)stroke.push(p);lastPoint=p});
-function finish(){
-if(down&&!drag&&stroke.length>2){
- let length=0,area=0,cx=0,cy=0;
- for(let i=0;i<stroke.length;i++){cx+=stroke[i].x;cy+=stroke[i].y;let q=stroke[(i+1)%stroke.length];if(i<stroke.length-1)length+=Math.hypot(q.x-stroke[i].x,q.y-stroke[i].y);area+=stroke[i].x*q.y-q.x*stroke[i].y;}
- let displacement=Math.hypot(lastPoint.x-start.x,lastPoint.y-start.y),closed=length>55&&displacement<Math.max(35,length*.22);
- if(closed&&Math.abs(area)>500){guide={mode:'circle',cx:cx/stroke.length,cy:cy/stroke.length,dir:area>0?1:-1,until:performance.now()+6500};}
- else if(length>12){let dx=0,dy=0;for(let i=1;i<stroke.length;i++){dx+=stroke[i].x-stroke[i-1].x;dy+=stroke[i].y-stroke[i-1].y;}let n=norm({x:dx,y:dy});guide={mode:'direction',x:n.x,y:n.y,until:performance.now()+4500};}
+(()=> {
+'use strict';
+const $=id=>document.getElementById(id);
+const canvas=$('world'),ctx=canvas.getContext('2d'),stage=$('stage');
+const birdSlider=$('birds'),obSlider=$('obstacles'),speedSlider=$('speed');
+const pauseBtn=$('pauseBtn'),learnBtn=$('learnBtn'),info=$('boidsInfo');
+let W=0,H=0,scale=1,flock=[],rocks=[],paused=false,showInfo=false,last=0;
+let pointer=null,dragged=null,stroke=[],gesture={until:0,kind:'none',x:0,y:0,cx:0,cy:0,dir:1};
+const rand=(a,b)=>a+Math.random()*(b-a),hyp=(x,y)=>Math.hypot(x,y);
+const unit=(x,y)=>{const d=hyp(x,y)||1;return{x:x/d,y:y/d}};
+function refreshStats(){$('stats').textContent=flock.length+' birds · '+rocks.length+' obstacles'}
+function resize(){
+ const r=stage.getBoundingClientRect();W=Math.max(1,r.width);H=Math.max(1,r.height);scale=Math.min(devicePixelRatio||1,2);
+ canvas.width=Math.round(W*scale);canvas.height=Math.round(H*scale);ctx.setTransform(scale,0,0,scale,0,0);
+ if(!flock.length)makeFlock();else flock.forEach(b=>{b.x=Math.max(5,Math.min(W-5,b.x));b.y=Math.max(5,Math.min(H-5,b.y))});
+ if(!rocks.length)makeRocks();
 }
-down=false;drag=null;start=null;lastPoint=null;stroke=[];
+function makeFlock(){
+ flock=[];for(let i=0;i<Number(birdSlider.value);i++){const a=rand(0,Math.PI*2),v=rand(35,65);flock.push({x:rand(8,W-8),y:rand(8,H-8),vx:Math.cos(a)*v,vy:Math.sin(a)*v,h:rand(0,360),phase:rand(0,6.28)})}refreshStats();
 }
+function makeRocks(){
+ rocks=[];const n=Number(obSlider.value),min=Math.min(W,H);
+ for(let i=0;i<n;i++){let x=rand(25,Math.max(26,W-25)),y=rand(25,Math.max(26,H-25)),r=rand(Math.max(10,min*.018),Math.max(16,min*.032));rocks.push({x,y,r})}refreshStats();
+}
+function sync(){ $('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×';makeFlock();makeRocks()}
+birdSlider.addEventListener('input',()=>{ $('birdsVal').value=birdSlider.value;makeFlock()});
+obSlider.addEventListener('input',()=>{ $('obstaclesVal').value=obSlider.value;makeRocks()});
+speedSlider.addEventListener('input',()=>{$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×'});
+function updateButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';learnBtn.textContent=showInfo?'▶ Resume simulation':'ⓘ Explain Boids'}
+pauseBtn.addEventListener('click',()=>{paused=!paused;if(showInfo){showInfo=false;info.hidden=true}updateButtons()});
+learnBtn.addEventListener('click',()=>{showInfo=!showInfo;info.hidden=!showInfo;paused=showInfo;updateButtons()});
+$('scatterBtn').addEventListener('click',makeRocks);
+$('resetBtn').addEventListener('click',()=>{birdSlider.value=90;obSlider.value=12;speedSlider.value=24;sync();gesture.until=0;paused=false;showInfo=false;info.hidden=true;updateButtons()});
+function localPoint(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();pointer=localPoint(e);stroke=[pointer];dragged=null;let nearest=Infinity;for(const o of rocks){const d=hyp(o.x-pointer.x,o.y-pointer.y);if(d<o.r+18&&d<nearest){nearest=d;dragged=o}}canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!pointer)return;const p=localPoint(e);if(dragged){dragged.x=Math.max(dragged.r,Math.min(W-dragged.r,p.x));dragged.y=Math.max(dragged.r,Math.min(H-dragged.r,p.y))}else if(hyp(p.x-pointer.x,p.y-pointer.y)>2)stroke.push(p);pointer=p});
+function finish(){if(pointer&&!dragged&&stroke.length>3){let length=0,area=0,dx=0,dy=0;for(let i=1;i<stroke.length;i++){const a=stroke[i-1],b=stroke[i];length+=hyp(b.x-a.x,b.y-a.y);dx+=b.x-a.x;dy+=b.y-a.y;area+=a.x*b.y-b.x*a.y}const first=stroke[0],lastp=stroke[stroke.length-1],dist=hyp(lastp.x-first.x,lastp.y-first.y);if(length>45&&dist<length*.23&&Math.abs(area)>350){let cx=0,cy=0;stroke.forEach(p=>{cx+=p.x;cy+=p.y});gesture={kind:'circle',cx:cx/stroke.length,cy:cy/stroke.length,dir:area>0?1:-1,until:performance.now()+6000}}else{const d=unit(dx,dy);gesture={kind:'direction',x:d.x,y:d.y,until:performance.now()+4500}}}pointer=null;dragged=null;stroke=[]}
 canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);
-function obstacleSteer(b){let f={x:0,y:0};obstacles.forEach(o=>{let d={x:b.x-o.x,y:b.y-o.y},m=mag(d),safe=o.r+42;if(m<safe&&m>.001)f=add(f,mul(norm(d),(safe-m)/safe*2.8))});return f}
-function safeMove(b,v,dt){let steps=Math.max(1,Math.ceil(mag(v)*dt*42/3)),sx=v.x*dt*42/steps,sy=v.y*dt*42/steps,x=b.x,y=b.y;for(let k=0;k<steps;k++){let nx=x+sx,ny=y+sy;obstacles.forEach(o=>{let dx=nx-o.x,dy=ny-o.y,d=Math.hypot(dx,dy),safe=o.r+5;if(d<safe){let ux=d>.001?dx/d:norm({x:-sx,y:-sy}).x,uy=d>.001?dy/d:norm({x:-sx,y:-sy}).y;nx=o.x+ux*safe;ny=o.y+uy*safe;let tx=-uy,ty=ux,dot=sx*tx+sy*ty;if(Math.abs(dot)>.01){let xx=o.x+ux*safe+tx*Math.sign(dot)*Math.min(Math.abs(dot),4),yy=o.y+uy*safe+ty*Math.sign(dot)*Math.min(Math.abs(dot),4);if(Math.hypot(xx-o.x,yy-o.y)>=safe-.2){nx=xx;ny=yy}}}});x=clamp(nx,5,W-5);y=clamp(ny,5,H-5)}return{x:x,y:y}}
-function update(dt,now){let max=+ss.value/10,next=[];for(let i=0;i<birds.length;i++){let b=birds[i],al={x:0,y:0},co={x:0,y:0},se={x:0,y:0},count=0,sc=0;for(let j=0;j<birds.length;j++){if(i===j)continue;let q=birds[j],dx=q.x-b.x,dy=q.y-b.y,d=Math.hypot(dx,dy);if(d<60){al.x+=q.vx;al.y+=q.vy;co.x+=q.x;co.y+=q.y;count++}if(d<25&&d>.01){se.x-=dx/(d*d);se.y-=dy/(d*d);sc++}}let f={x:0,y:0};if(count){al=sub(mul(norm(al),max),{x:b.vx,y:b.vy});co=mul(sub(mul(co,1/count),{x:b.x,y:b.y}),.012);f=add(f,mul(al,.72));f=add(f,co)}if(sc)f=add(f,mul(norm(se),1.35));f=add(f,obstacleSteer(b));if(now<guide.until){if(guide.mode==='circle'){let radial={x:b.x-guide.cx,y:b.y-guide.cy},tangent=norm({x:-radial.y*guide.dir,y:radial.x*guide.dir});f=add(f,mul(sub(mul(tangent,max),{x:b.vx,y:b.vy}),1.15));}else f=add(f,mul(sub(mul(guide,max),{x:b.vx,y:b.vy}),.85));}let m=32;if(b.x<m)f.x+=(m-b.x)/m*.8;if(b.x>W-m)f.x-=(b.x-W+m)/m*.8;if(b.y<m)f.y+=(m-b.y)/m*.8;if(b.y>H-m)f.y-=(b.y-H+m)/m*.8;let v=limit(add({x:b.vx,y:b.vy},mul(f,dt*2.5)),max);if(mag(v)<.4)v=mul(norm(v),.4);let p=safeMove(b,v,dt),actual={x:p.x-b.x,y:p.y-b.y};if(mag(actual)>.05)v=mul(norm(actual),Math.min(max,Math.max(.5,mag(v))));next.push({...b,x:p.x,y:p.y,vx:v.x,vy:v.y,phase:b.phase+dt*11})}birds=next}
-function drawObstacle(o){ctx.save();ctx.shadowColor='rgba(255,160,65,.9)';ctx.shadowBlur=20;let g=ctx.createRadialGradient(o.x-o.r*.35,o.y-o.r*.4,2,o.x,o.y,o.r*1.25);g.addColorStop(0,'#fff0b3');g.addColorStop(.28,'hsl('+o.hue+',100%,62%)');g.addColorStop(1,'hsla('+o.hue+',90%,38%,.88)');ctx.fillStyle=g;ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(o.x-o.r*.22,o.y-o.r*.25,o.r*.65,Math.PI*1.05,Math.PI*1.8);ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
-function drawBird(b){let a=Math.atan2(b.vy,b.vx),w=Math.sin(b.phase)*1.8;ctx.save();ctx.translate(b.x,b.y);ctx.rotate(a);ctx.shadowColor='hsla('+b.hue+',100%,70%,.95)';ctx.shadowBlur=11;ctx.fillStyle='hsl('+b.hue+',95%,'+(65+Math.sin(b.phase)*8)+'%)';ctx.beginPath();ctx.moveTo(8,0);ctx.quadraticCurveTo(-1,-3-w,-6,-6-w);ctx.quadraticCurveTo(-3,-1,-2,0);ctx.quadraticCurveTo(-3,1,-6,6+w);ctx.quadraticCurveTo(-1,3+w,8,0);ctx.fill();ctx.restore()}
-function draw(){ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#111d48');bg.addColorStop(.48,'#152e4c');bg.addColorStop(1,'#281747');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);for(let i=0;i<70;i++){let x=i*137.7%W,y=i*83.9%H;ctx.fillStyle='rgba(180,220,255,'+(.08+(i%4)*.025)+')';ctx.beginPath();ctx.arc(x,y,(i%3)*.45+.5,0,Math.PI*2);ctx.fill()}obstacles.forEach(drawObstacle);birds.forEach(drawBird);if(performance.now()<guide.until){ctx.save();ctx.strokeStyle='rgba(116,255,222,.8)';ctx.lineWidth=2;ctx.setLineDash([6,6]);ctx.beginPath();if(guide.mode==='circle'){ctx.arc(guide.cx,guide.cy,34,0,Math.PI*2);ctx.moveTo(guide.cx+guide.dir*45,guide.cy);ctx.lineTo(guide.cx+guide.dir*35,guide.cy-8);ctx.lineTo(guide.cx+guide.dir*35,guide.cy+8);}else{ctx.moveTo(W/2,H/2);ctx.lineTo(W/2+guide.x*55,H/2+guide.y*55);}ctx.stroke();ctx.restore()}}
-function frame(t){if(!last)last=t;let dt=Math.min((t-last)/1000,.035);last=t;if(!paused)update(dt,t);draw();requestAnimationFrame(frame)}
-if('ResizeObserver'in window)new ResizeObserver(resize).observe(stage);else window.addEventListener('resize',resize);resize();sync();requestAnimationFrame(frame);
+function step(dt,now){
+ const max=Number(speedSlider.value)*4.2,neighbor=62,next=[];
+ for(let i=0;i<flock.length;i++){
+  const b=flock[i];let ax=0,ay=0,cx=0,cy=0,sx=0,sy=0,count=0,close=0;
+  for(let j=0;j<flock.length;j++){if(i===j)continue;const q=flock[j],dx=q.x-b.x,dy=q.y-b.y,d=hyp(dx,dy);if(d<neighbor){ax+=q.vx;ay+=q.vy;cx+=q.x;cy+=q.y;count++}if(d>0&&d<25){sx-=dx/(d*d);sy-=dy/(d*d);close++}}
+  let fx=0,fy=0;
+  if(count){fx+=(ax/count-b.vx)*.8+(cx/count-b.x)*.018;fy+=(ay/count-b.vy)*.8+(cy/count-b.y)*.018}
+  if(close){fx+=sx*75;fy+=sy*75}
+  for(const o of rocks){const dx=b.x-o.x,dy=b.y-o.y,d=hyp(dx,dy),safe=o.r+35;if(d<safe&&d>0){fx+=dx/d*(safe-d)*2.2;fy+=dy/d*(safe-d)*2.2}}
+  if(now<gesture.until){if(gesture.kind==='circle'){const dx=b.x-gesture.cx,dy=b.y-gesture.cy,d=hyp(dx,dy)||1,tx=-dy/d*gesture.dir,ty=dx/d*gesture.dir;fx+=(tx*max-b.vx)*1.25;fy+=(ty*max-b.vy)*1.25}else if(gesture.kind==='direction'){fx+=(gesture.x*max-b.vx)*.8;fy+=(gesture.y*max-b.vy)*.8}}
+  if(b.x<30)fx+=2;if(b.x>W-30)fx-=2;if(b.y<30)fy+=2;if(b.y>H-30)fy-=2;
+  let vx=b.vx+fx*dt,vy=b.vy+fy*dt,v=unit(vx,vy);const speed=Math.min(max,Math.max(22,hyp(vx,vy)));vx=v.x*speed;vy=v.y*speed;
+  let x=b.x+vx*dt,y=b.y+vy*dt;
+  for(const o of rocks){const dx=x-o.x,dy=y-o.y,d=hyp(dx,dy),safe=o.r+5;if(d<safe){const n=unit(dx,dy);x=o.x+n.x*safe;y=o.y+n.y*safe}}
+  x=Math.max(4,Math.min(W-4,x));y=Math.max(4,Math.min(H-4,y));
+  next.push({...b,x,y,vx,vy,phase:b.phase+dt*12});
+ }
+ flock=next;
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#111d48');bg.addColorStop(1,'#281747');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<55;i++){ctx.fillStyle='rgba(190,220,255,.16)';ctx.beginPath();ctx.arc(i*137.7%W,i*83.9%H,1,0,Math.PI*2);ctx.fill()}
+ for(const o of rocks){ctx.save();ctx.shadowColor='#ffb45b';ctx.shadowBlur=18;const g=ctx.createRadialGradient(o.x-o.r*.3,o.y-o.r*.35,1,o.x,o.y,o.r);g.addColorStop(0,'#fff0b3');g.addColorStop(.35,'#ffbd69');g.addColorStop(1,'#c65c32');ctx.fillStyle=g;ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore()}
+ for(const b of flock){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));ctx.shadowColor='hsl('+b.h+',100%,70%)';ctx.shadowBlur=10;ctx.fillStyle='hsl('+b.h+',95%,68%)';const flap=Math.sin(b.phase)*2;ctx.beginPath();ctx.moveTo(9,0);ctx.quadraticCurveTo(-1,-4-flap,-7,-7-flap);ctx.quadraticCurveTo(-3,0, -7,7+flap);ctx.quadraticCurveTo(-1,4+flap,9,0);ctx.fill();ctx.restore()}
+ if(nowSafe()<gesture.until){ctx.save();ctx.strokeStyle='#74ffde';ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();if(gesture.kind==='circle')ctx.arc(gesture.cx,gesture.cy,34,0,Math.PI*2);else{ctx.moveTo(W/2,H/2);ctx.lineTo(W/2+gesture.x*55,H/2+gesture.y*55)}ctx.stroke();ctx.restore()}
+}
+function nowSafe(){return performance.now()}
+function frame(t){if(!last)last=t;const dt=Math.min((t-last)/1000,.04);last=t;if(!paused)step(dt,t);draw();requestAnimationFrame(frame)}
+try{
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(resize).observe(stage);else window.addEventListener('resize',resize);
+ resize();$('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×';refreshStats();updateButtons();requestAnimationFrame(frame);
+}catch(err){console.error(err);$('stats').textContent='Startup error: '+err.message}
 })();
 </script>
 </body>
