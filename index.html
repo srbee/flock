@@ -23,7 +23,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px}h1{
 <section class="controls">
 <div class="control"><div class="top"><label for="birds">Birds</label><output id="birdsVal">90</output></div><input id="birds" type="range" min="15" max="440" step="5" value="90"></div>
 <div class="control"><div class="top"><label for="obstacles">Obstacles</label><output id="obstaclesVal">12</output></div><input id="obstacles" type="range" min="0" max="30" value="12"></div>
-<div class="control"><div class="top"><label for="speed">Speed</label><output id="speedVal">2.4×</output></div><input id="speed" type="range" min="5" max="40" value="24"></div>
+<div class="control"><div class="top"><label for="speed">Speed</label><output id="speedVal">5.0×</output></div><input id="speed" type="range" min="1" max="10" value="5"></div>
 </section>
 <div class="actions">
 <button class="primary" id="pauseBtn" type="button">Ⅱ Pause</button>
@@ -54,7 +54,7 @@ const $=id=>document.getElementById(id);
 const canvas=$('world'),ctx=canvas.getContext('2d'),stage=$('stage');
 const birdSlider=$('birds'),obSlider=$('obstacles'),speedSlider=$('speed');
 const pauseBtn=$('pauseBtn'),learnBtn=$('learnBtn'),info=$('boidsInfo');
-let W=0,H=0,scale=1,flock=[],rocks=[],paused=false,showInfo=false,last=0;
+let W=0,H=0,scale=1,flock=[],rocks=[],paused=false,showInfo=false,last=0,lastRedistribute=0;
 let pointer=null,dragged=null,stroke=[],gesture={until:0,kind:'none',x:0,y:0,cx:0,cy:0,dir:1};
 const rand=(a,b)=>a+Math.random()*(b-a),hyp=(x,y)=>Math.hypot(x,y);
 const unit=(x,y)=>{const d=hyp(x,y)||1;return{x:x/d,y:y/d}};
@@ -72,7 +72,21 @@ function makeRocks(){
  rocks=[];const n=Number(obSlider.value),min=Math.min(W,H);
  for(let i=0;i<n;i++){let x=rand(25,Math.max(26,W-25)),y=rand(25,Math.max(26,H-25)),r=rand(Math.max(10,min*.018),Math.max(16,min*.032));rocks.push({x,y,r})}refreshStats();
 }
-function sync(){ $('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×';makeFlock();makeRocks()}
+function redistributeToMiddle(){
+ const placed=[];
+ for(const b of flock){
+  let p=null;
+  for(let attempt=0;attempt<80;attempt++){
+   const x=rand(W*.15,W*.85),y=rand(H*.15,H*.85);
+   const clearRocks=rocks.every(o=>hyp(x-o.x,y-o.y)>o.r+18);
+   const clearBirds=placed.every(q=>hyp(x-q.x,y-q.y)>13);
+   if(clearRocks&&clearBirds){p={x,y};break}
+  }
+  if(!p)p={x:rand(W*.2,W*.8),y:rand(H*.2,H*.8)};
+  b.x=p.x;b.y=p.y;placed.push(p);
+ }
+}
+function sync(){ $('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=Number(speedSlider.value).toFixed(1)+'×';makeFlock();makeRocks()}
 birdSlider.addEventListener('input',()=>{ $('birdsVal').value=birdSlider.value;makeFlock()});
 obSlider.addEventListener('input',()=>{ $('obstaclesVal').value=obSlider.value;makeRocks()});
 speedSlider.addEventListener('input',()=>{$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×'});
@@ -80,14 +94,14 @@ function updateButtons(){pauseBtn.textContent=paused?'▶ Resume':'Ⅱ Pause';le
 pauseBtn.addEventListener('click',()=>{paused=!paused;if(showInfo){showInfo=false;info.hidden=true}updateButtons()});
 learnBtn.addEventListener('click',()=>{showInfo=!showInfo;info.hidden=!showInfo;paused=showInfo;updateButtons()});
 $('scatterBtn').addEventListener('click',makeRocks);
-$('resetBtn').addEventListener('click',()=>{birdSlider.value=90;obSlider.value=12;speedSlider.value=24;sync();gesture.until=0;paused=false;showInfo=false;info.hidden=true;updateButtons()});
+$('resetBtn').addEventListener('click',()=>{birdSlider.value=90;obSlider.value=12;speedSlider.value=5;sync();gesture.until=0;paused=false;showInfo=false;info.hidden=true;updateButtons()});
 function localPoint(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();pointer=localPoint(e);stroke=[pointer];dragged=null;let nearest=Infinity;for(const o of rocks){const d=hyp(o.x-pointer.x,o.y-pointer.y);if(d<o.r+18&&d<nearest){nearest=d;dragged=o}}canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(!pointer)return;const p=localPoint(e);if(dragged){dragged.x=Math.max(dragged.r,Math.min(W-dragged.r,p.x));dragged.y=Math.max(dragged.r,Math.min(H-dragged.r,p.y))}else if(hyp(p.x-pointer.x,p.y-pointer.y)>2)stroke.push(p);pointer=p});
 function finish(){if(pointer&&!dragged&&stroke.length>3){let length=0,area=0,dx=0,dy=0;for(let i=1;i<stroke.length;i++){const a=stroke[i-1],b=stroke[i];length+=hyp(b.x-a.x,b.y-a.y);dx+=b.x-a.x;dy+=b.y-a.y;area+=a.x*b.y-b.x*a.y}const first=stroke[0],lastp=stroke[stroke.length-1],dist=hyp(lastp.x-first.x,lastp.y-first.y);if(length>45&&dist<length*.23&&Math.abs(area)>350){let cx=0,cy=0;stroke.forEach(p=>{cx+=p.x;cy+=p.y});gesture={kind:'circle',cx:cx/stroke.length,cy:cy/stroke.length,dir:area>0?1:-1,until:performance.now()+6000}}else{const d=unit(dx,dy);gesture={kind:'direction',x:d.x,y:d.y,until:performance.now()+4500}}}pointer=null;dragged=null;stroke=[]}
 canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);
 function step(dt,now){
- const max=Number(speedSlider.value)*4.2,neighbor=62,next=[];
+ const max=Number(speedSlider.value)*42,neighbor=62,next=[];
  for(let i=0;i<flock.length;i++){
   const b=flock[i];let ax=0,ay=0,cx=0,cy=0,sx=0,sy=0,count=0,close=0;
   for(let j=0;j<flock.length;j++){if(i===j)continue;const q=flock[j],dx=q.x-b.x,dy=q.y-b.y,d=hyp(dx,dy);if(d<neighbor){ax+=q.vx;ay+=q.vy;cx+=q.x;cy+=q.y;count++}if(d>0&&d<25){sx-=dx/(d*d);sy-=dy/(d*d);close++}}
@@ -113,7 +127,7 @@ function draw(){
  if(nowSafe()<gesture.until){ctx.save();ctx.strokeStyle='#74ffde';ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();if(gesture.kind==='circle')ctx.arc(gesture.cx,gesture.cy,34,0,Math.PI*2);else{ctx.moveTo(W/2,H/2);ctx.lineTo(W/2+gesture.x*55,H/2+gesture.y*55)}ctx.stroke();ctx.restore()}
 }
 function nowSafe(){return performance.now()}
-function frame(t){if(!last)last=t;const dt=Math.min((t-last)/1000,.04);last=t;if(!paused)step(dt,t);draw();requestAnimationFrame(frame)}
+function frame(t){if(!last)last=t;const dt=Math.min((t-last)/1000,.04);last=t;if(!paused){step(dt,t);if(!lastRedistribute)lastRedistribute=t;if(t-lastRedistribute>=5000){redistributeToMiddle();lastRedistribute=t}}draw();requestAnimationFrame(frame)}
 try{
  if(typeof ResizeObserver!=='undefined')new ResizeObserver(resize).observe(stage);else window.addEventListener('resize',resize);
  resize();$('birdsVal').value=birdSlider.value;$('obstaclesVal').value=obSlider.value;$('speedVal').value=(Number(speedSlider.value)/10).toFixed(1)+'×';refreshStats();updateButtons();requestAnimationFrame(frame);
